@@ -7,6 +7,8 @@
 // However, we can't do that for our binary, so we don't have a main function
 #![no_main]
 
+mod vga_buffer;
+
 use core::panic::PanicInfo;
 
 // the -> ! indicates that the function is diverging (i.e never returns)
@@ -21,12 +23,9 @@ static HELLO: &[u8] = b"Hello World";
 // names in order to ensure that each function has a unique name
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let vga_buffer = 0xb8000 as *mut u8;
-    for(i, &byte) in HELLO.iter().enumerate() {
-        unsafe {
-            *vga_buffer.offset(i as isize * 2) = byte;
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-        }
-    }
+    use core::fmt::Write;
+    vga_buffer::WRITER.lock().write_str("Hello again").unwrap();
+    write!(vga_buffer::WRITER.lock(), ", Some numbers: {} {}", 42, 1.337).unwrap();
+
     loop {}
 }
